@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nova Ai</title>
+<a href="k.html">j</a>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+  }
+  :root {
+    --text-color: #FFFFFF;
+    --icon-color: #ACACBE;
+    --icon-hover-bg: #5b5e71;
+    --placeholder-color: #dcdcdc;
+    --outgoing-chat-bg: #343541;
+    --incoming-chat-bg: #444654;
+    --outgoing-chat-border: #343541;
+    --incoming-chat-border: #444654;
+    --sidebar-bg: #222233;
+    --sidebar-text: #ccc;
+    --sidebar-hover-bg: #555577;
+  }
+  .light-mode {
+    --text-color: #343541;
+    --icon-color: #a9a9bc;
+    --icon-hover-bg: #f1f1f3;
+    --placeholder-color: #6c6c6c;
+    --outgoing-chat-bg: #FFFFFF;
+    --incoming-chat-bg: #F7F7F8;
+    --outgoing-chat-border: #FFFFFF;
+    --incoming-chat-border: #D9D9E3;
+    --sidebar-bg: #f0f0f3;
+    --sidebar-text: #222;
+    --sidebar-hover-bg: #ddd;
+  }
+  body {
+    background: var(--outgoing-chat-bg);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+  }
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--incoming-chat-border);
+  }
+  .sidebar-header {
+    padding: 15px 20px;
+    font-weight: 600;
+    font-size: 1.3rem;
+    border-bottom: 1px solid var(--incoming-chat-border);
+    user-select: none;
+  }
+  .conversations-list {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  .conversation-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--incoming-chat-border);
+    cursor: pointer;
+    user-select: none;
+  }
+  .conversation-item:hover {
+    background: var(--sidebar-hover-bg);
+  }
+  .conversation-item.active {
+    background: var(--icon-hover-bg);
+    font-weight: 600;
+  }
+  .new-conversation-btn {
+    padding: 12px 15px;
+    cursor: pointer;
+    text-align: center;
+    border-top: 1px solid var(--incoming-chat-border);
+    background: var(--icon-hover-bg);
+    color: var(--text-color);
+    user-select: none;
+  }
+  .new-conversation-btn:hover {
+    background: var(--icon-color);
+  }
+
+  /* Main chat area */
+  .main-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  .chat-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 100vh;
+    padding: 20px 10px 150px;
+    background: var(--outgoing-chat-bg);
+  }
+  :where(.chat-container, textarea)::-webkit-scrollbar {
+    width: 6px;
+  }
+  :where(.chat-container, textarea)::-webkit-scrollbar-track {
+    background: var(--incoming-chat-bg);
+    border-radius: 25px;
+  }
+  :where(.chat-container, textarea)::-webkit-scrollbar-thumb {
+    background: var(--icon-color);
+    border-radius: 25px;
+  }
+  .default-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 70vh;
+    padding: 0 10px;
+    text-align: center;
+    color: var(--text-color);
+  }
+  .default-text h1 {
+    font-size: 3.3rem;
+  }
+  .default-text p {
+    margin-top: 10px;
+    font-size: 1.1rem;
+  }
+  .chat-container .chat {
+    padding: 25px 10px;
+    display: flex;
+    justify-content: center;
+    color: var(--text-color);
+  }
+  .chat-container .chat.outgoing {
+    background: var(--outgoing-chat-bg);
+    border: 1px solid var(--outgoing-chat-border);
+  }
+  .chat-container .chat.incoming {
+    background: var(--incoming-chat-bg);
+    border: 1px solid var(--incoming-chat-border);
+  }
+  .chat .chat-content {
+    display: flex;
+    max-width: 1200px;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  span.material-symbols-rounded {
+    user-select: none;
+    cursor: pointer;
+  }
+  .chat .chat-content span {
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: var(--icon-color);
+    visibility: hidden;
+  }
+  .chat:hover .chat-content:not(:has(.typing-animation), :has(.error)) span {
+    visibility: visible;
+  }
+  .chat .chat-details {
+    display: flex;
+    align-items: center;
+  }
+  .chat .chat-details img {
+    width: 35px;
+    height: 35px;
+    align-self: flex-start;
+    object-fit: cover;
+    border-radius: 2px;
+  }
+  .chat .chat-details p {
+    white-space: pre-wrap;
+    font-size: 1.05rem;
+    padding: 0 50px 0 25px;
+    color: var(--text-color);
+    word-break: break-word;
+  }
+  .chat .chat-details p.error {
+    color: #e55865;
+  }
+  .chat .typing-animation {
+    padding-left: 25px;
+    display: inline-flex;
+  }
+  .typing-animation .typing-dot {
+    height: 7px;
+    width: 7px;
+    border-radius: 50%;
+    margin: 0 3px;
+    opacity: 0.7;
+    background: var(--text-color);
+    animation: animateDots 1.5s var(--delay) ease-in-out infinite;
+  }
+  .typing-animation .typing-dot:first-child {
+    margin-left: 0;
+  }
+  @keyframes animateDots {
+    0%,44% {
+      transform: translateY(0px);
+    }
+    28% {
+      opacity: 0.4;
+      transform: translateY(-6px);
+    }
+    44% {
+      opacity: 0.2;
+    }
+  }
+  .typing-container {
+    position: fixed;
+    bottom: 0;
+    width: calc(100% - 280px);
+    display: flex;
+    padding: 20px 10px;
+    justify-content: center;
+    background: var(--outgoing-chat-bg);
+    border-top: 1px solid var(--incoming-chat-border);
+    z-index: 10;
+  }
+  .typing-container.light-mode {
+    width: calc(100% - 280px);
+  }
+  .typing-content {
+    display: flex;
+    max-width: 950px;
+    width: 100%;
+    align-items: flex-end;
+    position: relative;
+  }
+  .typing-textarea {
+    width: 100%;
+    display: flex;
+    position: relative;
+  }
+  .typing-textarea textarea {
+    resize: none;
+    height: 55px;
+    width: 100%;
+    border: none;
+    padding: 15px 75px 15px 20px; /* leave room for mic button */
+    color: var(--text-color);
+    font-size: 1rem;
+    border-radius: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+    background: var(--incoming-chat-bg);
+    outline: 1px solid var(--incoming-chat-border);
+  }
+  .typing-textarea textarea::placeholder {
+    color: var(--placeholder-color);
+  }
+  .typing-content span {
+    width: 55px;
+    height: 55px;
+    display: flex;
+    border-radius: 4px;
+    font-size: 1.35rem;
+    align-items: center;
+    justify-content: center;
+    color: var(--icon-color);
+    user-select:none;
+  }
+  .typing-textarea span {
+    position: absolute;
+    right: 55px;
+    bottom: 0;
+    visibility: hidden;
+    cursor: pointer;
+  }
+  .typing-textarea textarea:valid ~ span {
+    visibility: visible;
+  }
+  .typing-controls {
+    display: flex;
+    margin-left: 10px;
+  }
+  .typing-controls span {
+    margin-left: 7px;
+    font-size: 1.4rem;
+    background: var(--incoming-chat-bg);
+    outline: 1px solid var(--incoming-chat-border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select:none;
+  }
+  .typing-controls span:hover {
+    background: var(--icon-hover-bg);
+  }
+  /* Voice mic button */
+  #mic-btn {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 55px;
+    height: 51px;
+    border-radius: 4px;
+    background: var(--incoming-chat-bg);
+    color: var(--icon-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+    user-select:none;
+    border: 1px solid var(--incoming-chat-border);
+  }
+  #mic-btn.listening {
+    background: #e55865;
+    color: white;
+  }
+
+  /* Suggestions box */
+  #suggestions {
+    position: absolute;
+    bottom: 65px;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    background: var(--incoming-chat-bg);
+    border: 1px solid var(--incoming-chat-border);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    z-index: 20;
+    max-height: 150px;
+    overflow-y: auto;
+    display: none;
+  }
+  #suggestions div {
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  #suggestions div:hover {
+    background: var(--icon-hover-bg);
+  }
+
+  @media screen and (max-width: 900px) {
+    .sidebar {
+      display: none;
+    }
+    .typing-container {
+      width: 100%;
+    }
+  }
+  @media screen and (max-width: 600px) {
+    .default-text h1 {
+      font-size: 2.3rem;
+    }
+    :where(.default-text p, textarea, .chat p) {
+      font-size: 0.95rem!important;
+    }
+    .chat-container .chat {
+      padding: 20px 10px;
+    }
+    .chat-container .chat img {
+      height: 32px;
+      width: 32px;
+    }
+    .chat-container .chat p {
+      padding: 0 20px;
+    }
+    .chat .chat-content:not(:has(.typing-animation), :has(.error)) span {
+      visibility: visible;
+    }
+    .typing-container {
+      padding: 15px 10px;
+    }
+    .typing-textarea textarea {
+      height: 45px;
+      padding: 10px 70px 10px 10px;
+    }
+    .typing-content span {
+      height: 45px;
+      width: 45px;
+      margin-left: 5px;
+    }
+    span.material-symbols-rounded {
+      font-size: 1.25rem!important;
+    }
+    #mic-btn {
+      width: 45px;
+      height: 45px;
+      font-size: 1.25rem;
+    }
+  }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet" />
+</head>
+<body>
+  
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">Brain Wave AI</div>
+ <div class="sidebar-header">History</div>
+    <div class="conversations-list" id="conversations-list"></div>
+    <div class="new-conversation-btn" id="new-conversation-btn">+ New Conversation</div>
+  </div>
+  <div class="main-area">
+    <div class="chat-container" id="chat-container">
+      <div class="default-text" id="default-text">
+        <h1>Brain Wave AI</h1>
+        <p>Ask questions, get AI-generated answers</p>
+      </div>
+    </div>
+    <div class="typing-container" id="typing-container">
+      <div class="typing-content">
+        <div class="typing-textarea" style="position:relative; width:100%;">
+          <textarea id="textarea" rows="1" placeholder="Ask me anything..." autocomplete="off" spellcheck="false"></textarea>
+          <div id="mic-btn" title="Voice input">🎤</div>
+          <div id="suggestions"></div>
+          <span id="send-btn" title="Send" class="material-symbols-rounded">send</span>
+        </div>
+        <div class="typing-controls">
+          <span id="dark-mode-toggle" title="Toggle Dark Mode" class="material-symbols-rounded">light_mode</span>
+          <span id="clear-chat" title="Clear Chat" class="material-symbols-rounded">delete_forever</span>
+ 	
+        </div>
+      </div>
+    </div>
+  </div> 
+<script>
+(() => {
+  // Elements
+  const chatContainer = document.getElementById('chat-container');
+  const textarea = document.getElementById('textarea');
+  const sendBtn = document.getElementById('send-btn');
+  const micBtn = document.getElementById('mic-btn');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+  const clearChatBtn = document.getElementById('clear-chat');
+  const suggestionsBox = document.getElementById('suggestions');
+  const defaultText = document.getElementById('default-text');
+  const conversationsList = document.getElementById('conversations-list');
+  const newConversationBtn = document.getElementById('new-conversation-btn');
+  const body = document.body;
+
+  // API Key (put your own here for testing)
+  const OPENAI_API_KEY = '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'; // <-- REPLACE THIS with your actual API key
+
+  // Data and state
+  let conversations = [];
+  let activeConversationId = null;
+  let isDarkMode = true; // Default dark mode off (or set to true if you want)
+  let isListening =false;
+  let recognition =false;
+  let currentStreamingAbort = null;
+
+  // Suggestions example
+  const exampleSuggestions = [
+    "Terms In Physics",
+    "Terms In Biology",
+    "Terms In Chemistry?",
+    "Tell me a joke",
+    "Longest World In The Dictionary",
+    "Explain Crypto Currency",
+    "Scientific Calculator In Html Tailwind(css) and Javascript",
+    "Build a Bank App In html Tailwind and Javascript and connect it to a Payment Gateway",
+    "How to improve coding skills?"
+  ];
+
+  // Utility: create unique ID
+  function createId() {
+    return 'id-' + Math.random().toString(36).slice(2);
+  }
+
+  // Initialize dark mode
+  function applyDarkMode(dark) {
+    isDarkMode = dark;
+    if (dark) {
+      body.classList.remove('light-mode');
+      darkModeToggle.textContent = 'dark_mode';
+    } else {
+      body.classList.add('light-mode');
+      darkModeToggle.textContent = 'light_mode';
+    }
+    // No localStorage saving here
+  }
+  applyDarkMode(isDarkMode);
+
+  // No localStorage — these are no-ops
+  function loadConversations() {}
+  function saveConversations() {}
+
+  // Create new conversation and set active
+  function createNewConversation() {
+    const conv = {
+      id: createId(),
+      messages: []
+    };
+    conversations.push(conv);
+    activeConversationId = conv.id;
+    saveConversations();
+    renderConversationsList();
+    renderChat();
+  }
+
+  // Switch active conversation
+  function setActiveConversation(id) {
+    activeConversationId = id;
+    renderConversationsList();
+    renderChat();
+  }
+
+  // Render conversations sidebar list
+  function renderConversationsList() {
+    conversationsList.innerHTML = '';
+    if (conversations.length === 0) {
+      conversationsList.innerHTML = '<div style="padding: 10px; color: var(--placeholder-color); user-select:none;">No conversations yet</div>';
+      return;
+    }
+    conversations.forEach(conv => {
+      // Use last message as preview or default
+      const preview = conv.messages.length
+        ? conv.messages[conv.messages.length - 1].content.slice(0, 40)
+        : 'New conversation';
+      const div = document.createElement('div');
+      div.className = 'conversation-item';
+      if (conv.id === activeConversationId) div.classList.add('active');
+      div.textContent = preview;
+      div.title = preview;
+      div.addEventListener('click', () => setActiveConversation(conv.id));
+      conversationsList.appendChild(div);
+    });
+  }
+
+  // Get active conversation
+  function getActiveConversation() {
+    return conversations.find(c => c.id === activeConversationId);
+  }
+
+  // Render chat messages of active conversation
+  function renderChat() {
+    const conv = getActiveConversation();
+    chatContainer.innerHTML = '';
+    if (!conv || conv.messages.length === 0) {
+      defaultText.style.display = 'flex';
+      return;
+    }
+    defaultText.style.display = 'none';
+    conv.messages.forEach(msg => {
+      addMessageToChat(msg.role, msg.content);
+    });
+    scrollChatToBottom();
+  }
+
+  // Scroll chat container to bottom
+  function scrollChatToBottom() {
+    setTimeout(() => {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }, 100);
+  }
+
+  // Add chat message bubble to container
+  function addMessageToChat(role, content) {
+    const chatDiv = document.createElement('div');
+    chatDiv.classList.add('chat');
+    chatDiv.classList.add(role === 'user' ? 'outgoing' : 'incoming');
+
+    const chatContent = document.createElement('div');
+    chatContent.className = 'chat-content';
+
+    const chatDetails = document.createElement('div');
+    chatDetails.className = 'chat-details';
+
+    const p = document.createElement('p');
+    p.textContent = content;
+
+    chatDetails.appendChild(p);
+    chatContent.appendChild(chatDetails);
+
+    // Add copy icon on hover for incoming/outgoing messages
+    const copyIcon = document.createElement('span');
+    copyIcon.className = 'material-symbols-rounded';
+    copyIcon.title = 'Copy';
+    copyIcon.textContent = 'content_copy';
+    copyIcon.addEventListener('click', () => {
+      navigator.clipboard.writeText(content).then(() => {
+        copyIcon.textContent = 'check';
+        setTimeout(() => (copyIcon.textContent = 'content_copy'), 1000);
+      });
+    });
+
+    chatContent.appendChild(copyIcon);
+
+    chatDiv.appendChild(chatContent);
+    chatContainer.appendChild(chatDiv);
+  }
+
+  // Show suggestions under textarea
+  function showSuggestions(matches) {
+    if (matches.length === 0) {
+      suggestionsBox.style.display = 'none';
+      suggestionsBox.innerHTML = '';
+      return;
+    }
+    suggestionsBox.innerHTML = '';
+    matches.forEach(sug => {
+      const div = document.createElement('div');
+      div.textContent = sug;
+      div.addEventListener('click', () => {
+        textarea.value = sug;
+        suggestionsBox.style.display = 'none';
+        textarea.focus();
+      });
+      suggestionsBox.appendChild(div);
+    });
+    suggestionsBox.style.display = 'block';
+  }
+
+  // Filter suggestions based on current textarea value
+  function filterSuggestions(text) {
+    if (!text) {
+      showSuggestions([]);
+      return;
+    }
+    const matches = exampleSuggestions.filter(s => s.toLowerCase().includes(text.toLowerCase()));
+    showSuggestions(matches);
+  }
+
+  // Auto resize textarea height
+  function autoResizeTextarea() {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 2 + 'px';
+  }
+
+  // Send user message and get AI response (with streaming)
+  async function sendMessage() {
+    let text = textarea.value.trim();
+    if (!text) return;
+
+    // Clear suggestions
+    suggestionsBox.style.display = 'none';
+
+    // Add user message to conversation
+    const conv = getActiveConversation();
+    if (!conv) {
+      createNewConversation();
+      return sendMessage();
+    }
+
+    conv.messages.push({ role: 'user', content: text });
+    saveConversations();
+    renderChat();
+
+    // Clear textarea
+    textarea.value = '';
+    autoResizeTextarea();
+
+    // Show typing animation for bot
+    const typingMsg = { role: 'assistant', content: '' };
+    conv.messages.push(typingMsg);
+    renderChat();
+
+    // Scroll to bottom to show typing
+    scrollChatToBottom();
+
+    // Call OpenAI API with streaming
+    try {
+      if (currentStreamingAbort) currentStreamingAbort.abort();
+      const controller = new AbortController();
+      currentStreamingAbort = controller;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4.1-mini",
+          messages: conv.messages.map(m => ({ role: m.role, content: m.content })),
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 1500,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let done = false;
+      let assistantText = '';
+      const lastMsgP = chatContainer.querySelector('.chat.incoming:last-child p');
+
+      lastMsgP.textContent = '';
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(l => l.trim() !== '');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.replace('data: ', '').trim();
+              if (jsonStr === '[DONE]') {
+                done = true;
+                break;
+              }
+              try {
+                const json = JSON.parse(jsonStr);
+                const delta = json.choices[0].delta.content || '';
+                assistantText += delta;
+                lastMsgP.textContent = assistantText;
+                scrollChatToBottom();
+              } catch (e) {}
+            }
+          }
+        }
+      }
+      typingMsg.content = assistantText;
+      saveConversations();
+      currentStreamingAbort = null;
+    } catch (err) {
+      console.error(err);
+      const lastMsgP = chatContainer.querySelector('.chat.incoming:last-child p');
+      if (lastMsgP) {
+        lastMsgP.textContent = 'Error: ' + err.message;
+        lastMsgP.classList.add('error');
+      }
+      currentStreamingAbort = null;
+    }
+  }
+
+  // Initialize voice recognition
+  function initVoiceRecognition() {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      micBtn.style.display = 'none';
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isListening = true;
+      micBtn.classList.add('listening');
+      micBtn.title = 'Listening... Click to stop';
+    };
+    recognition.onerror = e => {
+      console.error(e);
+      isListening = false;
+      micBtn.classList.remove('listening');
+      micBtn.title = 'Voice input';
+    };
+    recognition.onend = () => {
+      isListening = false;
+      micBtn.classList.remove('listening');
+      micBtn.title = 'Voice input';
+    };
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          textarea.value += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      autoResizeTextarea();
+    };
+  }
+
+  // Toggle voice recognition on mic button click
+  micBtn.addEventListener('click', () => {
+    if (!recognition) return;
+    if (isListening) {
+      recognition.stop();
+      isListening = false;
+    } else {
+      recognition.start();
+      isListening = true;
+    }
+  });
+
+  // Handle textarea input for suggestions and auto resize
+  textarea.addEventListener('input', (e) => {
+    autoResizeTextarea();
+    filterSuggestions(textarea.value);
+  });
+
+  // Keyboard shortcuts: Enter to send (Shift+Enter newline)
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Send button click
+  sendBtn.addEventListener('click', sendMessage);
+
+  // Dark mode toggle
+  darkModeToggle.addEventListener('click', () => {
+    applyDarkMode(!isDarkMode);
+  });
+
+  // Clear chat button
+  clearChatBtn.addEventListener('click', () => {
+    if (!activeConversationId) return;
+    const convIndex = conversations.findIndex(c => c.id === activeConversationId);
+    if (convIndex >= 0) {
+      conversations[convIndex].messages = [];
+      saveConversations();
+      renderChat();
+    }
+  });
+
+  // New conversation button
+  newConversationBtn.addEventListener('click', () => {
+    createNewConversation();
+  });
+
+  // Click outside suggestions to hide
+  document.addEventListener('click', e => {
+    if (!suggestionsBox.contains(e.target) && e.target !== textarea) {
+      suggestionsBox.style.display = 'none';
+    }
+  });
+
+  // Initial setup
+  function init() {
+    // no loading from localStorage
+    conversations = [];
+
+    if (conversations.length > 0) {
+      activeConversationId = conversations[0].id;
+    } else {
+      createNewConversation();
+    }
+    renderConversationsList();
+    renderChat();
+    autoResizeTextarea();
+    initVoiceRecognition();
+  }
+  init();
+})();
+
+</script>
+</body>
+</html>
